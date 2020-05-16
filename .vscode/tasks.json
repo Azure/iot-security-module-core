@@ -1,0 +1,92 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Clean",
+            "type": "shell",
+            "linux":{
+                "command": "cd ${workspaceFolder}/cmake && rm -rf *",
+            },
+            "windows":{
+                "command": "cd ${workspaceFolder}\\cmake && del * /S /Q > nul",
+            },
+            "presentation": {
+                "clear": true,
+                "reveal": "never"
+            }
+        },
+        {
+            "label": "CMake Generate",
+            "type": "shell",
+            "linux": {
+                "command": "cd ${workspaceFolder}/cmake && cmake -DCMAKE_BUILD_TYPE=Debug -Dlog_level=DEBUG -Drun_unittests:BOOL=ON -Drun_int_tests:BOOL=ON -Drun_coverage:BOOL=ON -Duse_object_pool:BOOL=ON ..",
+            },
+            "windows": {
+                "command": "cd ${workspaceFolder}/cmake && cmake -DCMAKE_BUILD_TYPE=Debug -Dlog_level=DEBUG -Drun_unittests:BOOL=OFF -Drun_int_tests:BOOL=OFF -Drun_coverage:BOOL=OFF -Duse_object_pool:BOOL=ON ..",
+            },
+            "group": "build"
+        },
+        {
+            "label": "CMake Build",
+            "type": "shell",
+            "group": "test",
+            "problemMatcher": ["$gcc"],
+            "windows": {
+                "command": "cd ${workspaceFolder}/cmake && cmake --build . -j${env:NUMBER_OF_PROCESSORS}",
+            },
+            "linux": {
+                "command": "cd ${workspaceFolder}/cmake && cmake --build . -- -j${env:NPROC}"
+            },
+            "dependsOrder": "sequence",
+            "dependsOn": ["Clean", "CMake Generate"]
+        },
+        {
+            "label": "CTest",
+            "type": "shell",
+            "linux": {
+                "command": "cd ${workspaceFolder}/cmake && ctest",
+            },
+            "windows": {
+                "command": "echo Warning: Cannot run tests on windows due to cmocka framework"
+            },
+            "group": "test",
+            "dependsOrder": "sequence",
+            "dependsOn": ["CMake Build"]
+        },
+        {
+            "label": "Coverage Test",
+            "type": "shell",
+            "windows": {
+                "command": "cd cmake && mkdir coverage_report && gcovr -r .. --html --html-details --output 'coverage_report/index.html' && explorer '${workspaceFolder}/cmake/coverage_report/index.html'"
+            },
+            "linux": {
+                "command": "cd cmake && mkdir coverage_report && gcovr -r .. --html --html-details --output 'coverage_report/index.html' && x-www-browser 'file://${workspaceFolder}/cmake/coverage_report/index.html'"
+            },
+            "group": "test",
+            "dependsOrder": "sequence",
+            "dependsOn": ["CTest"]
+        },
+        {
+            "label": "Run Test",
+            "type": "shell",
+            "command": "cd cmake && pushd \"${workspaceFolder}/cmake/${relativeFileDirname}\" && ./${fileBasenameNoExtension} && popd",
+            "group": "test",
+            "dependsOrder": "sequence",
+            "dependsOn": ["CMake Build"]
+        },
+        {
+            "label": "Valgrind Test",
+            "type": "shell",
+            "command": "cd cmake && cmake -Drun_unittests:BOOL=ON -Drun_int_tests:BOOL=ON -Duse_object_pool:BOOL=OFF .. && cmake --build . -- -j${env:NPROC} && pushd \"${workspaceFolder}/cmake/${relativeFileDirname}\" && valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -v ./${fileBasenameNoExtension} && popd",
+            "group": "test",
+            "dependsOn": ["Clean"]
+        },
+        {
+            "label": "Valgrind Massif Test",
+            "type": "shell",
+            "command": "cd cmake && pushd \"${workspaceFolder}/cmake/${relativeFileDirname}\" && valgrind --tool=massif --massif-out-file=/tmp/${fileBasenameNoExtension} ./${fileBasenameNoExtension}_exe && ms_print /tmp/${fileBasenameNoExtension} && popd",
+            "group": "test",
+            "dependsOn": ["Valgrind Test"]
+        },
+    ]
+}

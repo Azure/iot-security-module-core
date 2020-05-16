@@ -1,0 +1,11 @@
+{
+    "IsEmpty": true,
+    "PayloadSchemaVersion": "1.0",
+    "Name": "Heartbeat",
+    "Category": "Periodic",
+    "EventType": "Security",
+    "Id": "42b894a1-0e3f-4962-b79c-7dae124c7269",
+    "TimestampLocal": "2012-12-12T12:12:12",
+    "TimestampUTC": "2012-12-12T14:12:12",
+    "Payload": []
+}
